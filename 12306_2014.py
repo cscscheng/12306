@@ -211,29 +211,40 @@ def confirmOrder(infos):
 	data=PostDataToUrl(URL,postdata,head)
 	#print data
 	jsons=json.loads(data)
-	if jsons.has_key('messages') and len(jsons['messages']) == 0 and jsons.has_key('status') and jsons['status'] == True:
+	if jsons.has_key('errMsg') and len(jsons['errMsg'] )>0 :
+		print jsons['errMsg']
+	else:		 
+		ret = GetOrderID(infos)
+		if ret == 1:
+			print 'Error'
+			return 1
 		print '太好了..终与能回家了..感谢党,感谢国家..感谢12306 让我回家..'.decode('utf-8')
 		print '小伙伴们..快去支付吧..你已经有票了..'.decode('utf-8')
-		#GetOrderID(infos)
+		GetOrderID(infos)
 	
 	
 	
 def GetOrderID(infos):
+	i=0
 	while True:
 		timenow=time.time()*1000
 		timestr='%f'%timenow
 		randstr=timestr.split('.')[0]
 		url='https://kyfw.12306.cn/otn/confirmPassenger/queryOrderWaitTime?random='+randstr+'&tourFlag=dc&_json_att=&REPEAT_SUBMIT_TOKEN='+infos['tokenstr']	
-		head=myheaders
-		
+		head=myheaders		
 		data=GetDataByUrl(url,head)
 		j=json.loads(data)
-		print j
-		if j.has_key('orderid') and len(j['orderid'])>0:
-			print 'OrderTicket OK..'+j['orderid']
+		#print j
+		if j.has_key('orderId') and len(j['orderId'])>0:
+			print 'OrderTicket OK..'
 			return 0
 		else:
-			print 'Wait for ORderid'
+			print 'Wait for ORderid :'
+			print j['data']['msg']
+			time.sleep(1)
+			i=i+1
+			if  i>2:
+				return 1
 			
 	return 1
 
@@ -315,8 +326,8 @@ def SubmitStep2():
 	infos['train_location'] = GetValualeByName('train_location',data)
 	infos['seattype']=[]
 	
-	infos["name"]='xijinp'
-	infos['IDStrings']='110101198801014714'
+	infos["name"]='name'
+	infos['IDStrings']='身份证号码这里是'
 		
 	if len(seattypes)>0:
 		infos['seattype'] = GetSeatTypeCode(seattypes[0])
@@ -368,12 +379,12 @@ def SubmitStep2():
 
 
 fromcode='SSH'
-tocode='ZZF'
-startdate='2014-01-28'
+tocode='HYQ'
+startdate='2014-01-24'
 
 stationsdict=GetStationNames()
 
-station2='北京'
+station2='深圳北'
 if len(station2)>0:
 	for key,val in stationsdict.iteritems():
 		if re.findall(station2,key):
@@ -385,8 +396,8 @@ station='衡阳'
 for key,val in stationsdict.iteritems():
 	if re.findall(station,key):
 		print key.decode('utf-8')+'===>'+val
-		tocode=val
-		station=key
+		#tocode=val
+		#station=key
 
 
 	
@@ -407,6 +418,10 @@ while loginstatus:
 		for traninfo in Tranininfos:			
 			if traninfo['queryLeftNewDTO']['canWebBuy'] == 'Y': #这里可以加车次的过滤
 				print '太好了..找到一辆火车 :'.decode('utf-8')+traninfo['queryLeftNewDTO']['station_train_code']
+				if 0==traninfo['queryLeftNewDTO']['station_train_code'].find('G'):
+					print '找到高铁了....'.decode('utf-8')
+				else:
+					continue
 				#print traninfo['queryLeftNewDTO']
 				submitinfo={}
 				submitinfo=traninfo['queryLeftNewDTO']
